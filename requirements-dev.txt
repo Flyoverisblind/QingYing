@@ -1,0 +1,4 @@
+# Development / packaging dependencies
+-r requirements.txt
+pyinstaller>=6.10
+playwright>=1.45

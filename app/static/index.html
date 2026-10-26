@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<title>清影 · 视频超分与补帧</title>
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<svg class="svg-sprite" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8L12 2Z" fill="currentColor"/><path d="M19 14l.9 3.1L23 18l-3.1.9L19 22l-.9-3.1L15 18l3.1-.9L19 14Z" fill="currentColor" opacity=".65"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3.5 7.5A2.5 2.5 0 0 1 6 5h4l2 2h6A2.5 2.5 0 0 1 20.5 9.5v7A2.5 2.5 0 0 1 18 19H6a2.5 2.5 0 0 1-2.5-2.5v-9Z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M3.8 9h16.4" stroke="currentColor" stroke-width="1.7"/></symbol>
+  <symbol id="i-film" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4" stroke="currentColor" stroke-width="1.4" opacity=".65"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10-6.5L8 5.5Z" fill="currentColor"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v12m0 0 4.5-4.5M12 16l-4.5-4.5M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="M8 10l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-arrow-up" viewBox="0 0 24 24"><path d="M12 19V5m0 0 5 5m-5-5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.2 4.2L19 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 8v5m0 3.2v.1M10.3 4.5 2.8 18a1.8 1.8 0 0 0 1.6 2.6h15.2a1.8 1.8 0 0 0 1.6-2.6L13.7 4.5a2 2 0 0 0-3.4 0Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+  <symbol id="i-cpu" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><rect x="9.5" y="9.5" width="5" height="5" rx="1" fill="currentColor" opacity=".6"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".65"/></symbol>
+  <symbol id="i-gpu" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="11" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="9" cy="11.5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="16" cy="11.5" r="1.1" fill="currentColor"/><path d="M7 17v3M12 17v3M17 17v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4.5h6V7m-8 0 .8 12.2A2 2 0 0 0 9.8 21h4.4a2 2 0 0 0 2-1.8L17 7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6m0-6-8 8M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 7v5.2l3.2 2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+  <symbol id="i-gauge" viewBox="0 0 24 24"><path d="M4 18a8 8 0 1 1 16 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 14l4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="14" r="1.4" fill="currentColor"/></symbol>
+  <symbol id="i-disk" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M3 13h18M7 17h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="17" cy="17" r="1" fill="currentColor"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 11v5m0-8.2v.1" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
+  <symbol id="i-wand" viewBox="0 0 24 24"><path d="m4 20 11-11m-2-2 2-2 4 4-2 2M6 4l.8 2.2L9 7l-2.2.8L6 10l-.8-2.2L3 7l2.2-.8L6 4Zm13 10 .6 1.6L21 16l-1.4.6L19 18l-.6-1.4L17 16l1.4-.4L19 14Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6h.1M4 12h.1M4 18h.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-power" viewBox="0 0 24 24"><path d="M12 3v8m5.7-5.2a8 8 0 1 1-11.4 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="m4 20 4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m13.5 7.5 3 3" stroke="currentColor" stroke-width="1.6"/></symbol>
+</svg>
+
+<header class="topbar">
+  <div class="brand" data-nav="workspace">
+    <div class="brand-mark"><svg><use href="#i-spark"></use></svg></div>
+    <div class="brand-text"><strong>清影</strong><span>QINGYING STUDIO</span></div>
+  </div>
+  <nav class="main-nav" aria-label="主导航">
+    <button class="nav-btn active" data-view="workspace">工作台</button>
+    <button class="nav-btn" data-view="queue">任务队列 <span class="nav-badge" id="queue-count" hidden>0</span></button>
+    <button class="nav-btn" data-view="guide">使用指南</button>
+  </nav>
+  <div class="top-actions">
+    <div class="status-pill" id="ffmpeg-pill"><i class="status-dot loading"></i><span>正在检测引擎</span></div>
+    <button class="icon-btn" id="help-btn" title="帮助"><svg><use href="#i-info"></use></svg></button>
+    <button class="icon-btn" id="quit-btn" title="退出应用"><svg><use href="#i-power"></use></svg></button>
+  </div>
+</header>
+
+<main class="app-main">
+  <section id="view-workspace" class="view active">
+    <div class="hero">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="eyebrow-line"></span>LOCAL VIDEO ENHANCER</div>
+        <h1>让每一帧，<span class="grad-text">重新清晰。</span></h1>
+        <p>本地超分与运动补帧。把低清、卡顿的画面，变成锐利流畅的高帧影像，全程不离开你的电脑。</p>
+      </div>
+      <div class="hero-badges">
+        <div><b>100%</b><span>本地处理</span></div>
+        <div><b>4K / 8K</b><span>超分输出</span></div>
+        <div><b>60 / 120</b><span>高帧率</span></div>
+      </div>
+    </div>
+
+    <div class="workspace-grid">
+      <div class="main-column">
+        <section class="card source-card">
+          <div class="card-head">
+            <div class="head-title"><span class="step-no">01</span><div><h2>选择视频</h2><p>源文件不会上传到任何服务器</p></div></div>
+            <button class="text-btn" id="change-source" hidden>更换视频 <svg><use href="#i-refresh"></use></svg></button>
+          </div>
+
+          <div id="source-empty" class="source-empty">
+            <div class="drop-zone" id="drop-zone">
+              <div class="drop-visual">
+                <div class="drop-ring"></div>
+                <svg class="drop-icon"><use href="#i-film"></use></svg>
+              </div>
+              <h3>把视频拖到这里</h3>
+              <p>或直接浏览本机磁盘。对于几十 GB 的影片，选择本地路径比上传快得多。</p>
+              <div class="drop-actions">
+                <button class="btn primary" id="browse-source"><svg><use href="#i-folder"></use></svg>浏览本机文件</button>
+                <button class="btn ghost" id="upload-source"><svg><use href="#i-upload"></use></svg>上传文件</button>
+              </div>
+              <span class="hint">MP4 · MKV · MOV · AVI · TS · WEBM <em>·</em> 支持 8K 以内视频</span>
+            </div>
+            <input type="file" id="file-input" accept="video/*,.mkv,.ts,.m2ts,.rmvb" hidden>
+            <div class="upload-progress" id="upload-progress" hidden>
+              <div class="upload-progress-head"><span>正在上传到本机工作目录…</span><b id="upload-percent">0%</b></div>
+              <div class="progress-track"><i id="upload-bar"></i></div>
+              <span class="upload-hint">大文件上传会占用额外磁盘空间；本地路径模式无需复制文件。</span>
+            </div>
+          </div>
+
+          <div id="source-loaded" class="source-loaded" hidden>
+            <div class="source-thumb">
+              <img id="source-thumb-img" alt="视频缩略图">
+              <div class="thumb-shade"></div>
+              <span class="thumb-badge" id="source-codec-badge">H.264</span>
+            </div>
+            <div class="source-details">
+              <div class="source-name-row">
+                <h3 id="source-name">—</h3>
+                <span class="source-ok"><svg><use href="#i-check"></use></svg>已载入</span>
+              </div>
+              <p class="source-path" id="source-path" title="">—</p>
+              <div class="meta-grid">
+                <div><span>分辨率</span><b id="meta-resolution">—</b></div>
+                <div><span>帧率</span><b id="meta-fps">—</b></div>
+                <div><span>时长</span><b id="meta-duration">—</b></div>
+                <div><span>大小</span><b id="meta-size">—</b></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card settings-card">
+          <div class="card-head">
+            <div class="head-title"><span class="step-no">02</span><div><h2>增强方案</h2><p>选择超分倍率与目标帧率</p></div></div>
+            <div class="preset-menu">
+              <span>快捷方案</span>
+              <button data-preset="uhd60">4K 60</button>
+              <button data-preset="upscale">仅超分</button>
+              <button data-preset="smooth">仅补帧</button>
+              <button data-preset="anime">动画修复</button>
+            </div>
+          </div>
+
+          <div class="option-grid">
+            <div class="option-panel" id="sr-panel">
+              <div class="option-head">
+                <div class="option-icon teal"><svg><use href="#i-wand"></use></svg></div>
+                <div class="option-title"><h3>超分辨率</h3><p>重建边缘、纹理与细节</p></div>
+                <label class="switch"><input type="checkbox" id="sr-toggle" checked><span class="switch-track"><i></i></span></label>
+              </div>
+              <div class="option-body" id="sr-body">
+                <div class="field">
+                  <label>处理引擎</label>
+                  <div class="segmented" id="sr-engine">
+                    <button data-value="fast" class="active" title="Lanczos 重采样 + 自适应锐化">快速高清</button>
+                    <button data-value="ai" id="ai-engine-btn" disabled title="需要兼容的 Vulkan 显卡">AI 超分</button>
+                  </div>
+                  <p class="field-note" id="sr-engine-note">高质量重采样，速度快，适合长视频。</p>
+                </div>
+                <div class="field">
+                  <label>放大倍率</label>
+                  <div class="scale-row" id="scale-row">
+                    <button data-scale="2" class="active">2×</button>
+                    <button data-scale="3">3×</button>
+                    <button data-scale="4">4×</button>
+                    <button data-scale="0">自定义</button>
+                  </div>
+                  <div class="inline-custom" id="custom-height-row" hidden>
+                    <span>目标高度</span><input type="number" id="custom-height" min="240" max="4320" step="2" value="2160"><span>px</span>
+                  </div>
+                </div>
+                <div class="field" id="ai-model-field" hidden>
+                  <label>AI 模型</label>
+                  <select id="ai-model">
+                    <option value="general">通用实拍 · x4plus（细节强）</option>
+                    <option value="anime">动画 / 插画 · x4plus-anime</option>
+                    <option value="fast">快速 · x2（省显存）</option>
+                  </select>
+                </div>
+                <div class="target-readout" id="sr-readout"><span>输出</span><b>—</b></div>
+              </div>
+            </div>
+
+            <div class="option-panel" id="interp-panel">
+              <div class="option-head">
+                <div class="option-icon blue"><svg><use href="#i-gauge"></use></svg></div>
+                <div class="option-title"><h3>运动补帧</h3><p>用光流重建中间帧，画面更顺滑</p></div>
+                <label class="switch"><input type="checkbox" id="interp-toggle"><span class="switch-track"><i></i></span></label>
+              </div>
+              <div class="option-body locked" id="interp-body">
+                <div class="field">
+                  <label>补帧质量</label>
+                  <div class="segmented" id="interp-quality">
+                    <button data-value="balanced" class="active">均衡</button>
+                    <button data-value="smooth">平滑</button>
+                    <button data-value="fast">快速</button>
+                  </div>
+                  <p class="field-note" id="interp-quality-note">双向光流 + 遮挡补偿，速度与画质平衡。</p>
+                </div>
+                <div class="field">
+                  <label>目标帧率</label>
+                  <div class="fps-row" id="fps-row">
+                    <button data-mode="multiple" data-value="2" class="active">2×</button>
+                    <button data-mode="multiple" data-value="2.5">2.5×</button>
+                    <button data-mode="fixed" data-value="60">60 fps</button>
+                    <button data-mode="fixed" data-value="120">120 fps</button>
+                    <button data-mode="custom">自定义</button>
+                  </div>
+                  <div class="inline-custom" id="custom-fps-row" hidden>
+                    <span>目标帧率</span><input type="number" id="custom-fps" min="12" max="240" step="0.01" value="60"><span>fps</span>
+                  </div>
+                </div>
+                <div class="field">
+                  <label>处理顺序</label>
+                  <div class="segmented small" id="order-row">
+                    <button data-value="interp_first" class="active">补帧优先 · 更快</button>
+                    <button data-value="sr_first">超分优先 · 更锐</button>
+                  </div>
+                </div>
+                <div class="target-readout" id="interp-readout"><span>目标</span><b>—</b></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="advanced">
+            <button class="advanced-toggle" id="advanced-toggle">
+              <span><svg><use href="#i-edit"></use></svg>高级设置</span>
+              <span class="advanced-summary" id="advanced-summary">H.264 · 高质量 · MP4</span>
+              <svg class="chevron"><use href="#i-chevron"></use></svg>
+            </button>
+            <div class="advanced-body" id="advanced-body" hidden>
+              <div class="adv-grid">
+                <div class="field">
+                  <label>降噪</label>
+                  <select id="denoise">
+                    <option value="off">关闭</option>
+                    <option value="light">轻度（保留颗粒）</option>
+                    <option value="medium">中度</option>
+                    <option value="strong">强力（老旧素材）</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>锐化 <b id="sharpen-value">0.35</b></label>
+                  <input type="range" id="sharpen" min="0" max="1.2" step="0.05" value="0.35">
+                </div>
+                <div class="field">
+                  <label>编码器</label>
+                  <select id="encoder"></select>
+                </div>
+                <div class="field">
+                  <label>画质</label>
+                  <select id="quality">
+                    <option value="high">高质量（推荐）</option>
+                    <option value="balanced">均衡</option>
+                    <option value="small">更小体积</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>封装格式</label>
+                  <div class="segmented small" id="container-row">
+                    <button data-value="mp4" class="active">MP4</button>
+                    <button data-value="mkv">MKV</button>
+                  </div>
+                </div>
+                <div class="field">
+                  <label>音频</label>
+                  <select id="audio">
+                    <option value="copy">原样保留</option>
+                    <option value="aac">转换为 AAC</option>
+                    <option value="none">移除音轨</option>
+                  </select>
+                </div>
+                <div class="field span-2">
+                  <label>处理区间 <span class="label-hint">留空则处理全片</span></label>
+                  <div class="range-inputs">
+                    <div><span>开始</span><input type="number" id="trim-start" min="0" step="0.1" value="0"><em>秒</em></div>
+                    <div><span>结束</span><input type="number" id="trim-end" min="0" step="0.1" placeholder="全片"><em>秒</em></div>
+                    <button class="mini-btn" id="use-preview-time">从预览处开始</button>
+                  </div>
+                </div>
+                <div class="field span-2">
+                  <label>输出目录</label>
+                  <div class="path-input">
+                    <input type="text" id="output-dir" placeholder="默认：程序目录 / output">
+                    <button class="mini-btn" id="browse-output"><svg><use href="#i-folder"></use></svg>选择</button>
+                  </div>
+                </div>
+                <div class="field span-2">
+                  <label>文件名 <span class="label-hint">无需扩展名</span></label>
+                  <input type="text" id="output-name" placeholder="自动生成">
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card run-card">
+          <div class="run-summary">
+            <span class="run-eyebrow">READY TO RENDER</span>
+            <div class="run-target" id="run-target">选择视频后开始</div>
+            <p id="run-detail">所有处理均在本机完成。</p>
+          </div>
+          <div class="run-actions">
+            <button class="btn ghost" id="preview-btn" disabled><svg><use href="#i-refresh"></use></svg>刷新预览</button>
+            <button class="btn secondary" id="trial-btn" disabled>试跑 10 秒</button>
+            <button class="btn primary large" id="start-btn" disabled><svg><use href="#i-spark"></use></svg>开始处理</button>
+          </div>
+        </section>
+      </div>
+
+      <aside class="side-column">
+        <section class="card preview-card">
+          <div class="card-head compact">
+            <div class="head-title"><div><h2>画质预览</h2><p>拖动分割线对比原始与增强</p></div></div>
+            <div class="preview-actions">
+              <div class="time-input"><svg><use href="#i-clock"></use></svg><input type="number" id="preview-time" value="1" min="0" step="0.1"><span>s</span></div>
+              <button class="icon-btn small" id="refresh-preview" title="刷新预览"><svg><use href="#i-refresh"></use></svg></button>
+            </div>
+          </div>
+          <div class="compare" id="compare">
+            <div class="compare-empty" id="compare-empty">
+              <div class="compare-empty-icon"><svg><use href="#i-film"></use></svg></div>
+              <h3>等待视频</h3>
+              <p>载入视频后，这里会显示同一帧的增强前后对比。</p>
+            </div>
+            <div class="compare-stage" id="compare-stage" hidden>
+              <img id="compare-before" class="compare-img" alt="原始画面">
+              <div class="compare-after-wrap" id="compare-after-wrap"><img id="compare-after" class="compare-img" alt="增强画面"></div>
+              <div class="compare-labels"><span>原始</span><span>增强后</span></div>
+              <div class="compare-handle" id="compare-handle"><i></i></div>
+              <input type="range" id="compare-range" min="0" max="100" value="50" aria-label="对比分割线">
+            </div>
+            <div class="preview-loading" id="preview-loading" hidden>
+              <div class="spinner"></div><span>正在渲染预览帧…</span>
+            </div>
+          </div>
+          <div class="preview-foot">
+            <p id="preview-note">选择视频后可生成增强预览。</p>
+            <div class="preview-target" id="preview-target" hidden></div>
+          </div>
+        </section>
+
+        <section class="card queue-card">
+          <div class="card-head compact">
+            <div class="head-title"><div><h2>任务队列</h2><p id="queue-subtitle">还没有任务</p></div></div>
+            <button class="text-btn" data-nav="queue">全部 <svg><use href="#i-chevron"></use></svg></button>
+          </div>
+          <div class="queue-list" id="queue-list">
+            <div class="queue-empty"><span>队列是空的</span><p>开始处理或试跑一段 10 秒预览。</p></div>
+          </div>
+        </section>
+
+        <section class="card system-card">
+          <div class="system-row"><div class="sys-icon"><svg><use href="#i-cpu"></use></svg></div><div><span>本地算力</span><b id="sys-cpu">—</b></div></div>
+          <div class="system-row"><div class="sys-icon"><svg><use href="#i-film"></use></svg></div><div><span>FFmpeg</span><b id="sys-ffmpeg">—</b></div></div>
+          <div class="system-row"><div class="sys-icon"><svg><use href="#i-gpu"></use></svg></div><div><span>AI 引擎</span><b id="sys-ai">检测中…</b></div></div>
+          <div class="system-row"><div class="sys-icon"><svg><use href="#i-disk"></use></svg></div><div><span>输出目录</span><b id="sys-output" class="ellipsis" title="">—</b></div></div>
+          <div class="system-note" id="sys-note" hidden></div>
+          <div class="system-actions">
+            <button class="mini-btn" id="open-output"><svg><use href="#i-folder"></use></svg>打开输出目录</button>
+            <button class="mini-btn" id="refresh-ai">重新检测</button>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </section>
+
+  <section id="view-queue" class="view">
+    <div class="page-head">
+      <div><div class="eyebrow"><span class="eyebrow-line"></span>PROCESSING QUEUE</div><h1>任务队列</h1><p>长视频建议先用 10 秒片段确认效果，再开始整片处理。</p></div>
+      <div class="page-head-actions"><button class="btn ghost" id="open-output-2"><svg><use href="#i-folder"></use></svg>输出目录</button></div>
+    </div>
+    <div class="queue-full" id="queue-full">
+      <div class="big-empty"><svg><use href="#i-list"></use></svg><h3>暂无任务</h3><p>回到工作台，选择视频并开始处理。</p><button class="btn primary" data-nav="workspace">去工作台</button></div>
+    </div>
+  </section>
+
+  <section id="view-guide" class="view">
+    <div class="page-head">
+      <div><div class="eyebrow"><span class="eyebrow-line"></span>FIELD NOTES</div><h1>使用指南</h1><p>三个步骤，把旧素材变成清晰流畅的新画面。</p></div>
+    </div>
+    <div class="guide-grid">
+      <article class="guide-card">
+        <span class="guide-no">01</span>
+        <h3>选择视频</h3>
+        <p>点击「浏览本机文件」直接读取磁盘路径，不会复制或上传文件；也可以拖入较小的视频。</p>
+        <div class="guide-tip">几十 GB 的影片，请务必使用本地路径模式。</div>
+      </article>
+      <article class="guide-card">
+        <span class="guide-no">02</span>
+        <h3>设定方案</h3>
+        <p>先用 10 秒试跑确认画质与速度。超分选 2× 通常已足够；补帧适合 24/30fps 的实拍内容。</p>
+        <div class="guide-tip">AI 超分需要兼容 Vulkan 的独立显卡；没有时使用「快速高清」。</div>
+      </article>
+      <article class="guide-card">
+        <span class="guide-no">03</span>
+        <h3>开始渲染</h3>
+        <p>任务在本机后台运行，可随时取消。完成后可下载、播放或直接打开输出目录。</p>
+        <div class="guide-tip">CPU 补帧较慢，长片请分段处理或使用高性能显卡。</div>
+      </article>
+    </div>
+    <div class="guide-columns">
+      <article class="card guide-section">
+        <h2>速度建议</h2>
+        <ul class="guide-list">
+          <li><b>补帧优先</b>：先在原分辨率插帧，再放大。通常比「超分优先」快 3–5 倍，适合长视频。</li>
+          <li><b>处理片段</b>：在高级设置里填写开始/结束秒数，先做 1–2 分钟样片。</li>
+          <li><b>编码器</b>：支持 NVIDIA / Intel / AMD 硬件编码时会自动出现在编码器列表，速度提升明显。</li>
+          <li><b>画质与体积</b>：H.264 兼容性最好，H.265 同画质体积更小，AV1 更省空间但编码更慢。</li>
+        </ul>
+      </article>
+      <article class="card guide-section">
+        <h2>常见问题</h2>
+        <div class="faq">
+          <details><summary>为什么 AI 超分是灰色的？</summary><p>AI 引擎依赖 Vulkan 显卡加速。请更新显卡驱动；集成显卡或较旧的显卡可能不支持。快速高清不依赖显卡。</p></details>
+          <details><summary>补帧后画面出现拖影？</summary><p>运动补偿对快速转场、字幕和遮挡较敏感。把补帧质量改为「平滑」并降低倍率，或对片段单独处理。</p></details>
+          <details><summary>输出文件在哪里？</summary><p>默认保存在程序目录下的 <code>output</code> 文件夹，也可以在高级设置里指定其他目录。</p></details>
+          <details><summary>能处理多长的视频？</summary><p>没有硬性时长限制，但处理时间与像素、帧率成正比。8 小时影片可能需要数小时甚至更久，建议分段或先试跑。</p></details>
+        </div>
+      </article>
+    </div>
+  </section>
+</main>
+
+<footer class="app-footer">
+  <span>清影 QingYing <b>v1.0</b></span>
+  <span>所有处理均在本机完成 · 不上传云端</span>
+  <span id="footer-runtime">本地工作台</span>
+</footer>
+
+<!-- File browser modal -->
+<div class="modal" id="browser-modal" hidden>
+  <div class="modal-backdrop" data-close="browser"></div>
+  <div class="modal-panel browser-panel">
+    <div class="modal-head">
+      <div><span class="eyebrow" id="browser-eyebrow">PICK A VIDEO</span><h2 id="browser-title">选择视频文件</h2></div>
+      <button class="icon-btn" data-close="browser"><svg><use href="#i-close"></use></svg></button>
+    </div>
+    <div class="browser-toolbar">
+      <button class="icon-btn small" id="browser-up" title="上一级"><svg><use href="#i-arrow-up"></use></svg></button>
+      <div class="browser-path"><input type="text" id="browser-path" spellcheck="false"><button class="mini-btn" id="browser-go">前往</button></div>
+    </div>
+    <div class="browser-roots" id="browser-roots"></div>
+    <div class="browser-list" id="browser-list"></div>
+    <div class="browser-foot">
+      <span id="browser-selection">请选择一个视频文件</span>
+      <div>
+        <button class="btn ghost" data-close="browser">取消</button>
+        <button class="btn primary" id="browser-confirm" disabled>选择此文件</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Help modal -->
+<div class="modal" id="help-modal" hidden>
+  <div class="modal-backdrop" data-close="help"></div>
+  <div class="modal-panel help-panel">
+    <div class="modal-head">
+      <div><span class="eyebrow">ABOUT QINGYING</span><h2>清影 · 本地视频增强</h2></div>
+      <button class="icon-btn" data-close="help"><svg><use href="#i-close"></use></svg></button>
+    </div>
+    <div class="help-body">
+      <p>清影把超分辨率、运动补帧和视频编码整合在一个本地工作台里。所有运算都在你的电脑上完成，不会上传视频。</p>
+      <div class="help-grid">
+        <div><b>视频超分</b><span>Lanczos 重采样 + 锐化，或 Real-ESRGAN AI 重建。</span></div>
+        <div><b>运动补帧</b><span>基于 FFmpeg 双向光流的中间帧合成，可输出 60/120fps。</span></div>
+        <div><b>输出编码</b><span>H.264 / H.265 / AV1，自动检测硬件编码器。</span></div>
+      </div>
+      <p class="help-note">如果没有找到 FFmpeg，请安装后重启清影，或将 ffmpeg 放在程序目录的 <code>bin</code> 文件夹。</p>
+    </div>
+    <div class="modal-foot"><button class="btn primary" data-close="help">知道了</button></div>
+  </div>
+</div>
+
+<!-- Video player modal -->
+<div class="modal" id="video-modal" hidden>
+  <div class="modal-backdrop" data-close="video"></div>
+  <div class="modal-panel video-panel">
+    <div class="modal-head">
+      <div><span class="eyebrow">PREVIEW OUTPUT</span><h2>片段预览</h2></div>
+      <button class="icon-btn" data-close="video"><svg><use href="#i-close"></use></svg></button>
+    </div>
+    <video id="video-player" controls playsinline></video>
+    <div class="modal-foot"><span id="video-caption"></span><button class="btn ghost" data-close="video">关闭</button></div>
+  </div>
+</div>
+
+<div class="toast-stack" id="toast-stack"></div>
+<script src="/static/app.js"></script>
+</body>
+</html>

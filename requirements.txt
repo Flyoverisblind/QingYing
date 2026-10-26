@@ -1,0 +1,13 @@
+# 清影 QingYing — runtime dependencies
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.30,<1.0
+python-multipart>=0.0.9
+pillow>=10.0
+opencv-python-headless>=4.9
+pystray>=0.19
+imageio-ffmpeg>=0.5
+
+# Optional AI super-resolution.  The wheel bundles Real-ESRGAN models and a
+# Vulkan accelerated ncnn runtime.  Without a compatible GPU the app simply
+# hides the AI mode and all other features keep working.
+realesrgan-ncnn-py==2.0.0

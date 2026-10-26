@@ -1,0 +1,29 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+
+# Runtime data
+data/
+output/
+vendor/ffmpeg
+vendor/ffmpeg.exe
+dist/
+build/
+_probe/
+samples/
+*.log
+
+# User media (never commit)
+*.mp4
+*.mkv
+*.mov
+*.avi
+*.wmv
+*.ts
+*.m2ts
+*.webm
+
+# OS
+.DS_Store
+Thumbs.db
